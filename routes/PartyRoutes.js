@@ -10,15 +10,17 @@ router.use(async function (req, res, next) {
   next();
 });
 
-router.post("/", async function (req, res) {
-  const body = req.body;
-
-  if (!body.min && !body.max) {
+router.post("/", async function (req, res, next) {
+  if (req.body.min === undefined || req.body.max === undefined) {
     res.end("Body should have min and max properties.");
+  } else {
+    next();
   }
+});
 
-  // Start game
-  Party.currentParty = new Party(body.min || 0, body.max || 100);
+// Start game
+router.post("/", async function (req, res) {
+  Party.currentParty = new Party(req.body.min, req.body.max);
 
   res.party = Party;
 
@@ -35,13 +37,11 @@ router
     res.end(Party.currentParty.showGuesses());
   })
   .put(PartyMiddleware, async (req, res) => {
-    const body = req.body;
-
-    if (!body.number) {
+    if (!req.body.number) {
       res.end("Body should have number property.");
     }
 
-    let guess = Party.currentParty.guess(body.number);
+    let guess = Party.currentParty.guess(req.body.number);
 
     if (Party.currentParty.solved === true) {
       globals.scores.push(Party.currentParty.score);
